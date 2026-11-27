@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fin-CoDiT — Semantics-Frequency Alignment for Financial Time Series Generation</title>
+<meta name="description" content="Fin-CoDiT aligns the hierarchical semantic depth of a frozen LLM with the spectral bands of financial time series, and generates physically valid, text-conditioned OHLCV sequences.">
+<meta name="author" content="Yingxiao Zhang, Jiaxin Duan, Junfu Zhang, Yue Zou, Ke Feng">
+<meta property="og:title" content="Fin-CoDiT — CIKM '26">
+<meta property="og:description" content="Semantics-Frequency Alignment in Diffusion Transformers for Financial Time Series Generation.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://xigmoid.github.io/fin-codit/assets/img/fig1_overview.png">
+<link rel="canonical" href="https://xigmoid.github.io/fin-codit/">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,500;1,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<!-- ======================= nav ======================= -->
+<header class="nav">
+  <div class="shell nav-inner">
+    <a class="brand" href="index.html">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span>Fin-CoDiT</span>
+    </a>
+    <nav class="nav-links" id="nav-links" aria-label="Primary">
+      <a href="#insight">Insight</a>
+      <a href="#method">Method</a>
+      <a href="#results">Results</a>
+      <a href="#data">Dataset</a>
+      <a href="results.html">Full tables</a>
+    </nav>
+    <div class="nav-actions">
+      <a class="btn btn-primary btn-sm" href="https://dl.acm.org/doi/10.1145/3799682.3841011" target="_blank" rel="noopener">Paper ↗</a>
+      <button class="icon-btn" data-theme-toggle aria-label="Toggle theme"></button>
+      <button class="icon-btn nav-toggle" data-nav-toggle aria-label="Open menu" aria-expanded="false" aria-controls="nav-links">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ======================= hero ======================= -->
+<section class="hero">
+  <div class="shell">
+    <div class="hero-badges">
+      <span class="badge badge-live"><span class="badge-dot"></span>CIKM '26 · Rome, Italy</span>
+      <span class="badge">November 7–11, 2026</span>
+      <span class="badge">DOI 10.1145/3799682.3841011</span>
+      <span class="badge">Full research paper</span>
+    </div>
+
+    <h1>Fin<span class="accent-word">-CoDiT</span></h1>
+    <p class="hero-sub lede">
+      Exploring <strong>Semantics–Frequency Alignment</strong> in Diffusion Transformers for
+      conditional financial time series generation — making the <em>control resolution</em>
+      of a frozen LLM match the <em>spectral resolution</em> of the market.
+    </p>
+
+    <p class="hero-meta">
+      <span>Yingxiao Zhang<sup>1</sup></span>
+      <span>Jiaxin Duan<sup>2</sup></span>
+      <span>Junfu Zhang<sup>1</sup></span>
+      <span>Yue Zou<sup>1</sup></span>
+      <span>Ke Feng<sup>1</sup></span>
+      <span class="muted"><sup>1</sup>Peking University &nbsp;·&nbsp; <sup>2</sup>China Electronics Cloud Tech</span>
+    </p>
+
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="https://dl.acm.org/doi/10.1145/3799682.3841011" target="_blank" rel="noopener">Read the paper ↗</a>
+      <a class="btn btn-ghost" href="results.html">All result tables</a>
+      <a class="btn btn-ghost" href="assets/paper/Fin-CoDiT_CIKM2026_slides.pdf">Talk slides (PDF)</a>
+    </div>
+
+    <div class="strip" aria-label="Pipeline summary">
+      <span class="strip-group">
+        <span class="tok">OHLCV</span><span class="arrow">→</span>
+        <span class="tok">MODWT · Haar L4</span><span class="arrow">→</span>
+        <span class="tok">TF-CVAE</span>
+      </span>
+      <span class="strip-group">
+        <span class="tok tok-low">z low</span>
+        <span class="tok tok-mid">z mid</span>
+        <span class="tok tok-high">z high</span>
+      </span>
+      <span class="strip-group">
+        <span class="tok">RoutDiT</span><span class="arrow">→</span>
+        <span class="tok">IMODWT</span><span class="arrow">→</span>
+        <span class="tok">OHLCV</span>
+      </span>
+    </div>
+
+    <div class="logo-card" style="margin-top:1.1rem">
+      <img src="assets/img/logo-cikm2026.png" alt="CIKM 2026 conference logo">
+      <span class="sep" aria-hidden="true"></span>
+      <img class="pku" src="assets/img/logo-pku.png" alt="Peking University logo">
+      <span class="logo-caption">CIKM ’26 · Peking University</span>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= results-first panel ======================= -->
+<section class="section" style="padding-top:.5rem">
+  <div class="shell">
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <p class="kicker">Current results</p>
+          <h2 class="panel-title">Aggregate benchmark against nine baselines</h2>
+          <p class="panel-sub">6 assets · 3 horizons (7 / 14 / 30 days) · 10 models · strictly calendar-aligned test windows</p>
+        </div>
+        <div style="margin-left:auto;text-align:right">
+          <div class="rail-big"><div class="n">0.892</div><div class="l">Semantic consistency</div></div>
+        </div>
+      </div>
+
+      <div class="results-layout">
+        <div class="results-main">
+          <div class="chart-toolbar">
+            <div class="seg" data-metric-group="heatmap" role="group" aria-label="Select metric">
+              <button type="button" data-metric="mae" aria-pressed="true">MAE</button>
+              <button type="button" data-metric="mse" aria-pressed="false">MSE</button>
+            </div>
+            <p class="chart-note">Cell = Fin-CoDiT vs. the strongest baseline on the same asset &amp; horizon (↓ better)</p>
+          </div>
+          <div class="heat" id="heatmap"></div>
+          <div class="legend">
+            <span><i style="background:color-mix(in srgb, var(--ok) 34%, var(--panel))"></i>Fin-CoDiT better</span>
+            <span><i style="background:var(--panel-2)"></i>on par</span>
+            <span><i style="background:color-mix(in srgb, var(--bad) 34%, var(--panel))"></i>baseline better</span>
+            <span class="muted">Absolute values shown under each percentage</span>
+          </div>
+        </div>
+
+        <aside class="results-rail">
+          <div id="rail"></div>
+        </aside>
+      </div>
+
+      <div class="panel-foot">
+        <span>MSE / MAE over calendar-aligned horizons; SCS, CVR and human scores averaged over all datasets and horizons.</span>
+        <a class="btn btn-ghost btn-sm" href="results.html">View all tables →</a>
+      </div>
+    </div>
+
+    <!-- action cards -->
+    <div class="actions" style="margin-top:.9rem">
+      <a class="action action-primary" href="https://dl.acm.org/doi/10.1145/3799682.3841011" target="_blank" rel="noopener">
+        <span class="action-title">Read the paper</span>
+        <span class="action-desc">CIKM ’26 full research paper — 12 pages, with the complete derivations of SFA routing and Belief-free TF-CVAE objectives.</span>
+        <span class="action-go">dl.acm.org ↗</span>
+      </a>
+      <a class="action" href="#method">
+        <span class="action-title">See the architecture</span>
+        <span class="action-desc">TF-CVAE bottleneck, RoutDiT grouped routing attention, and the multi-agent data workflow.</span>
+        <span class="action-go">walkthrough →</span>
+      </a>
+      <a class="action" href="results.html">
+        <span class="action-title">Inspect the numbers</span>
+        <span class="action-desc">Full fidelity grid over 6 assets × 3 horizons, aggregate alignment metrics and the ablation study.</span>
+        <span class="action-go">tables →</span>
+      </a>
+      <a class="action" href="#data">
+        <span class="action-title">Dataset &amp; protocol</span>
+        <span class="action-desc">145,209 aligned text–series pairs built by a four-stage agentic workflow with back-translation verification.</span>
+        <span class="action-go">details →</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= insight ======================= -->
+<section class="section" id="insight">
+  <div class="shell">
+    <div class="section-head">
+      <p class="kicker">Key insight</p>
+      <h2>Semantic depth is structurally isomorphic to spectral band</h2>
+      <p>
+        Lower LLM layers encode fine-grained, local lexical detail; higher layers encode abstract,
+        global macro-semantics. In market data the same hierarchy appears along frequency:
+        high-frequency components carry short-lived micro-shocks, low-frequency components carry
+        long-horizon macro-trends. Fin-CoDiT makes the two hierarchies <strong>explicitly address each
+        other</strong>, so a macro instruction cannot leak into a one-day jump and a shock cannot
+        smear across a quarter.
+      </p>
+    </div>
+
+    <div class="iso reveal">
+      <div>
+        <p class="iso-col-title">LLM semantic depth — 32 layers</p>
+        <div class="depth">
+          <div class="depth-row">
+            <div class="ticks zone-high" style="--w:37.5%"></div>
+            <p class="depth-note"><b>layers 1–12 · lexical / structural detail</b> local syntax, token-level cues</p>
+          </div>
+          <div class="depth-row">
+            <div class="ticks zone-mid" style="--w:37.5%"></div>
+            <p class="depth-note"><b>layers 13–24 · intermediate semantics</b> phrasing, discourse structure</p>
+          </div>
+          <div class="depth-row">
+            <div class="ticks zone-low" style="--w:25%"></div>
+            <p class="depth-note"><b>layers 25–32 · abstract macro-semantics</b> regime, trend, narrative</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="iso-arrow">
+        <div class="cap">semantic depth<br>≅<br>spectral band</div>
+        <svg width="86" height="26" viewBox="0 0 86 26" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true" style="margin:.5rem auto 0;opacity:.7">
+          <path d="M4 13h70"/><path d="M66 6l10 7-10 7"/>
+        </svg>
+      </div>
+
+      <div>
+        <p class="iso-col-title">Frequency bands of the signal</p>
+        <div class="band band-high">
+          <span class="band-name">HIGH</span>
+          <span class="band-desc">Short-lived shocks — gaps, jumps, intraday reversals</span>
+          <span class="band-range">l &lt; 12</span>
+        </div>
+        <div class="band band-mid">
+          <span class="band-name">MID</span>
+          <span class="band-desc">Swing structure — weekly swings, local trends</span>
+          <span class="band-range">13 ≤ l ≤ 24</span>
+        </div>
+        <div class="band band-low">
+          <span class="band-name">LOW</span>
+          <span class="band-desc">Macro trend — regimes, drift, long-horizon shape</span>
+          <span class="band-range">l &gt; 24</span>
+        </div>
+        <p class="chart-note" style="margin-top:.7rem;text-align:center">
+          Measured, not assumed — Figure&nbsp;3b of the paper.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= method ======================= -->
+<section class="section" id="method">
+  <div class="shell">
+    <div class="section-head">
+      <p class="kicker">Method</p>
+      <h2>Three components, each answering one hard constraint</h2>
+      <p>
+        Unconditional generators can only add samples; they cannot simulate a deliberate market
+        dynamics. Conditioning a diffusion transformer on market prose fails for two structural
+        reasons — cross-variable physical constraints and frequency-addressable control. Fin-CoDiT
+        fixes both inside the network topology.
+      </p>
+    </div>
+
+    <div class="pillars">
+      <article class="pillar reveal">
+        <p class="pillar-num">01 — TF-CVAE</p>
+        <h3>Time-Frequency Causal VAE</h3>
+        <p>
+          A channel-level bottleneck with <strong>no spatial downsampling</strong> (a downsample would
+          alias frequencies and leak the future). An orthogonal causal encoder runs convolutions along
+          the time axis with left padding only; a Local-Queried Attention bottleneck compresses four
+          latent channels. Decoding is <strong>branched</strong>: a trend head emits open/close, a
+          volatility head emits shadow extensions, and a differentiable morphological projection
+          composes them so that <span class="mono">High ≥ max(O, C)</span> and
+          <span class="mono">Low ≤ min(O, C)</span> hold unconditionally.
+        </p>
+        <div class="pillar-metrics">
+          <span class="pill">CVR <b>0.05%</b></span>
+          <span class="pill">leak R² <b>0.01</b></span>
+          <span class="pill">no-SFA <b>0.62</b></span>
+        </div>
+      </article>
+
+      <article class="pillar reveal">
+        <p class="pillar-num">02 — RoutDiT</p>
+        <h3>Grouped Routing Attention</h3>
+        <p>
+          Square patchification is abandoned: tokens are cut as <span class="mono">P<sub>T</sub> × 1</span>
+          pure time windows inside one frequency band, and positional encoding becomes
+          <span class="mono">PE<sub>time</sub>(t′) + PE<sub>freq</sub>(f)</span>. Attention heads are
+          partitioned into low / mid / high groups that share one frequency-specific Query, and each
+          group performs a <strong>Top-K sparse selection of LLM layers</strong> under an explicit
+          frequency prior. A prior-preservation KL term on the dense pre-truncation logits keeps the
+          routing distribution anchored.
+        </p>
+        <div class="pillar-metrics">
+          <span class="pill">Top-K <b>5 / 32</b></span>
+          <span class="pill">SCS <b>0.892</b></span>
+          <span class="pill">Event F1 <b>0.854</b></span>
+        </div>
+      </article>
+
+      <article class="pillar reveal">
+        <p class="pillar-num">03 — Data workflow</p>
+        <h3>Multi-agent synthesis</h3>
+        <p>
+          Real news and prices cannot be aligned directly. Price segments are profiled into a
+          quantitative state, news is distilled by FinBERT-MRC into an event state, and a local
+          Qwen3.5-397B-A17B agent writes the market prose. A hard factual guardrail, a semantic
+          de-duplication pass and a <strong>back-translation consistency check</strong> keep only
+          pairs whose text survives re-reading — Gold (C ≥ 0.85), Silver (0.70 ≤ C &lt; 0.85) and
+          rejected.
+        </p>
+        <div class="pillar-metrics">
+          <span class="pill">pairs <b>145,209</b></span>
+          <span class="pill">α <b>0.85</b></span>
+          <span class="pill">human audit <b>5%</b></span>
+        </div>
+      </article>
+    </div>
+
+    <figure class="figure" style="margin-top:1rem">
+      <img src="assets/img/fig1_overview.png" alt="Fin-CoDiT overview: TF-CVAE encoder and branched decoder, RoutDiT denoiser with frequency-partitioned heads and top-K LLM routing, and the four-stage multi-agent data workflow" loading="lazy">
+      <figcaption><b>Figure 1 — architecture overview.</b> Left: the TF-CVAE path (orthogonal causal encoder → LQA bottleneck → branched causal decoder with differentiable morphology projection). Centre: RoutDiT, whose attention heads are grouped by frequency band and route the frozen LLM's 32 layers under a Top-K gate. Right: the agentic data workflow that produces the aligned text–series pairs.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ======================= results ======================= -->
+<section class="section" id="results">
+  <div class="shell">
+    <div class="section-head">
+      <p class="kicker">Evaluation</p>
+      <h2>Fidelity, stylized facts, and semantic controllability</h2>
+      <p>
+        Six evaluation assets (four Chinese Treasury futures and two equity ETFs), evaluated on
+        strictly calendar-aligned horizons — Monday-to-Sunday weeks and natural months — rather than
+        the sliding windows used in training.
+      </p>
+    </div>
+
+    <div class="panel reveal" style="margin-bottom:1rem">
+      <div class="panel-head">
+        <div>
+          <p class="kicker">Table 3 — aggregate</p>
+          <h3 class="panel-title">Statistical alignment, physical constraints and controllability</h3>
+          <p class="panel-sub">Averaged over all six datasets and the 7 / 14 / 30-day horizons</p>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="table-wrap" id="aggregate-table"></div>
+      </div>
+      <div class="panel-foot">
+        <span>Unconditional models cannot consume a text condition, so SCS and human score are undefined for them.</span>
+        <a class="btn btn-ghost btn-sm" href="results.html">Full fidelity grid →</a>
+      </div>
+    </div>
+
+    <div class="pillars" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+      <figure class="figure reveal">
+        <img src="assets/img/fig3b_routing.png" alt="Heatmap of learned routing weights across the 32 LLM layers for low-, mid- and high-frequency head groups" loading="lazy">
+        <figcaption><b>Figure 3b — learned routing.</b> Low-frequency heads concentrate on deep layers (l &gt; 24), high-frequency heads on shallow layers (l &lt; 12). The isomorphism is learned from data, not imposed by architecture.</figcaption>
+      </figure>
+      <figure class="figure reveal">
+        <img src="assets/img/fig4_attention.png" alt="Cross-attention maps of a low-frequency head and a high-frequency head over the prompt tokens" loading="lazy">
+        <figcaption><b>Figure 4 — cross-attention.</b> Low-frequency heads spread weight over global macro terms such as “economic downturn”; high-frequency heads sharpen onto event phrases such as “sudden rate cut”.</figcaption>
+      </figure>
+    </div>
+
+    <div class="panel reveal" style="margin-top:1rem">
+      <div class="panel-head">
+        <div>
+          <p class="kicker">Table 4 — ablation</p>
+          <h3 class="panel-title">Every component earns its place</h3>
+          <p class="panel-sub">Removing SFA costs the most; removing the morphological projection breaks the market itself</p>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="table-wrap" id="ablation-table"></div>
+      </div>
+      <div class="panel-foot">
+        <span>Full SFA adds ≈130M trainable parameters and reaches the target loss ≈32% faster than the variant without it.</span>
+        <a class="btn btn-ghost btn-sm" href="results.html">More analysis →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= counterfactual ======================= -->
+<section class="section" id="counterfactual">
+  <div class="shell">
+    <div class="section-head">
+      <p class="kicker">Zero-shot stress test</p>
+      <h2>Counterfactual scenarios the model has never seen</h2>
+      <p>
+        Synthetic prompts describe extreme events that do not exist in the training set. The test is
+        not whether the series looks plausible, but whether the <em>event lands on the right day</em>.
+      </p>
+    </div>
+
+    <figure class="figure reveal" style="margin-bottom:1rem">
+      <img src="assets/img/fig2_counterfactual.png" alt="Four counterfactual scenario comparisons between Fin-CoDiT and T2S" loading="lazy">
+      <figcaption><b>Figure 2 — case studies.</b> For each scenario, Fin-CoDiT (left) and the T2S baseline (right) generate the same 7-day window from the same prompt.</figcaption>
+    </figure>
+
+    <div class="scenarios">
+      <article class="scenario reveal">
+        <div class="scenario-head"><span class="scenario-id">S1</span><span class="scenario-title">Geopolitical escalation &amp; oil shock</span></div>
+        <p>Bond futures plunge −12.4% cumulative over 7 days; a Day-2 oil supply shock opens a gap-down and a −6.5% intraday drawdown through the 101.50 support on 2.8× volume.</p>
+        <div class="scenario-out">
+          <div class="ours"><b>Fin-CoDiT</b><span>Day-2 gap-down reproduced exactly, followed by realistic post-event consolidation.</span></div>
+          <div class="base"><b>T2S</b><span>Smooths the sharp liquidation into a monotonic curve.</span></div>
+        </div>
+      </article>
+      <article class="scenario reveal">
+        <div class="scenario-head"><span class="scenario-id">S2</span><span class="scenario-title">Cooling inflation &amp; short squeeze</span></div>
+        <p>Treasury futures post +5.6% over 7 days; a surprise −0.5% MoM CPI print on Day 5 sparks a +3.8% single-day surge that clears the 112.80 resistance on 2.2× volume.</p>
+        <div class="scenario-out">
+          <div class="ours"><b>Fin-CoDiT</b><span>Day-5 CPI breakout reproduced exactly, with the volatility regime retained.</span></div>
+          <div class="base"><b>T2S</b><span>Renders the step-like surge as a gradual ramp.</span></div>
+        </div>
+      </article>
+      <article class="scenario reveal">
+        <div class="scenario-head"><span class="scenario-id">S3</span><span class="scenario-title">Mid-week hawkish trend reversal</span></div>
+        <p>Bond futures round out a volatile 7-day cycle after a sharp mid-week trend reversal: prices break lower, and hawkish commentary on Day 4 triggers a severe −4.7% liquidation and a −5.2% maximum drawdown from the peak.</p>
+        <div class="scenario-out">
+          <div class="ours"><b>Fin-CoDiT</b><span>Day-4 hawkish reversal reproduced; the regime boundary lands on the specified day.</span></div>
+          <div class="base"><b>T2S</b><span>Misses the regime boundary entirely.</span></div>
+        </div>
+      </article>
+      <article class="scenario reveal">
+        <div class="scenario-head"><span class="scenario-id">S4</span><span class="scenario-title">Abrupt liquidity / banking-default shock</span></div>
+        <p>A sudden liquidity event produces a Day-3 gap and a deep intraday drawdown that the trend structure alone cannot express.</p>
+        <div class="scenario-out">
+          <div class="ours"><b>Fin-CoDiT</b><span>Day-3 banking-default liquidation reproduced exactly.</span></div>
+          <div class="base"><b>T2S</b><span>Smooths the sharp liquidation into a monotonic curve.</span></div>
+        </div>
+      </article>
+    </div>
+    <p class="small muted" style="margin-top:.9rem">
+      Human evaluation corroborates the visual result: Fin-CoDiT scores <strong>3.45 ± 0.15</strong> against T2S's <strong>3.12 ± 0.21</strong> on a 5-point Likert scale.
+    </p>
+  </div>
+</section>
+
+<!-- ======================= dataset ======================= -->
+<section class="section" id="data">
+  <div class="shell">
+    <div class="section-head">
+      <p class="kicker">Data</p>
+      <h2>145,209 aligned text–series pairs</h2>
+      <p>
+        Eleven years of Chinese market data, split chronologically before any window is cut, so no
+        future information can leak into training.
+      </p>
+    </div>
+
+    <div class="data-cards reveal" style="margin-bottom:1.2rem">
+      <div class="data-card accent"><div class="n">145,209</div><div class="l">retained text–series pairs</div></div>
+      <div class="data-card"><div class="n">15,475</div><div class="l">observation windows (W<sub>t</sub> ≥ 35 days)</div></div>
+      <div class="data-card"><div class="n">6</div><div class="l">evaluation assets: T, TF, TS, TL, HS300, SSE50</div></div>
+      <div class="data-card"><div class="n">11 yrs</div><div class="l">Jan 2015 → Dec 2025 · 2,750 trading days</div></div>
+      <div class="data-card"><div class="n">0.85</div><div class="l">Krippendorff’s α on the 5% human audit</div></div>
+    </div>
+
+    <div class="workflow reveal" style="margin-bottom:1.2rem">
+      <div class="wf-step">
+        <h4>Market profiling</h4>
+        <p>Sliding windows become a quantitative state — trend, volatility, extreme events, technical patterns, volume profiles — merged with a FinBERT-MRC event state extracted from Wind news.</p>
+      </div>
+      <div class="wf-step">
+        <h4>Scene description</h4>
+        <p>A locally deployed Qwen3.5-397B-A17B agent turns each market state into 15 diverse natural-language market descriptions.</p>
+      </div>
+      <div class="wf-step">
+        <h4>Filtering &amp; de-duplication</h4>
+        <p>A hard factual alignment guardrail removes directional and numerical contradictions; embedding similarity above 0.90 drops redundant variants.</p>
+      </div>
+      <div class="wf-step">
+        <h4>Back-translation check</h4>
+        <p>The quality verifier re-reads each description and reconstructs a market state; consistency C splits pairs into Gold (≥ 0.85), Silver (0.70–0.85) and rejected.</p>
+      </div>
+    </div>
+
+    <div class="panel reveal">
+      <div class="panel-head">
+        <div>
+          <p class="kicker">Table 1 — composition</p>
+          <h3 class="panel-title">Windows and pairs per asset</h3>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="table-wrap" id="dataset-table"></div>
+        <div class="split-bar" style="margin-top:1.1rem">
+          <div style="flex:73;background:var(--freq-low)">Train · 73%</div>
+          <div style="flex:9;background:var(--freq-mid)">Val · 9%</div>
+          <div style="flex:18;background:var(--freq-high)">Test · 18%</div>
+        </div>
+        <div class="split-legend">
+          <span><i style="background:var(--freq-low)"></i>Train · Jan 2015 → Dec 2022 · 109,453 pairs</span>
+          <span><i style="background:var(--freq-mid)"></i>Validation · 2023 · 11,298 pairs</span>
+          <span><i style="background:var(--freq-high)"></i>Test · Jan 2024 → Dec 2025 · 24,458 pairs</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= timeline ======================= -->
+<section class="section" id="timeline">
+  <div class="shell">
+    <div class="section-head">
+      <p class="kicker">Release notes</p>
+      <h2>Project timeline</h2>
+    </div>
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-date">2026-11-09</div>
+        <div>
+          <div class="tl-title">CIKM ’26 presentation, Rome</div>
+          <div class="tl-body">Fin-CoDiT presented at the 35th ACM International Conference on Information and Knowledge Management.</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-date">2026-08-23</div>
+        <div>
+          <div class="tl-title">Camera-ready accepted</div>
+          <div class="tl-body">Full research paper accepted for the CIKM ’26 proceedings — 12 pages, DOI 10.1145/3799682.3841011.</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-date">2026-08-07</div>
+        <div>
+          <div class="tl-title">Acceptance notification</div>
+          <div class="tl-body">The paper clears review for the CIKM ’26 main conference track.</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-date">2026-05-23</div>
+        <div>
+          <div class="tl-title">Submission</div>
+          <div class="tl-body">Full research paper submitted to CIKM ’26, with the model architecture, dataset protocol and all evaluation tables released alongside it.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= citation ======================= -->
+<section class="section">
+  <div class="shell">
+    <div class="callout reveal">
+      <div>
+        <p class="kicker">Citation</p>
+        <h3 style="margin-bottom:.5rem">Fin-CoDiT — CIKM ’26</h3>
+        <pre class="bib" id="bibtex">@inproceedings{zhang2026fincodit,
+  title     = {Exploring Semantics-Frequency Alignment in Diffusion Transformers for Financial Time Series Generation},
+  author    = {Zhang, Yingxiao and Duan, Jiaxin and Zhang, Junfu and Zou, Yue and Feng, Ke},
+  booktitle = {Proceedings of the 35th ACM International Conference on Information and Knowledge Management (CIKM '26)},
+  year      = {2026},
+  publisher = {Association for Computing Machinery},
+  doi       = {10.1145/3799682.3841011}
+}</pre>
+      </div>
+      <div style="display:grid;gap:.5rem;min-width:180px">
+        <button class="btn btn-primary" data-copy="#bibtex">Copy BibTeX</button>
+        <a class="btn btn-ghost" href="assets/paper/Fin-CoDiT_CIKM2026.pdf">Local PDF</a>
+        <a class="btn btn-ghost" href="https://dl.acm.org/doi/10.1145/3799682.3841011" target="_blank" rel="noopener">ACM DL ↗</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ======================= footer ======================= -->
+<footer class="footer">
+  <div class="shell">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand"><span class="brand-mark" aria-hidden="true"></span> Fin-CoDiT</div>
+        <p class="footer-note">
+          Semantics–Frequency Alignment in Diffusion Transformers for conditional financial
+          time series generation. Published at CIKM ’26, Rome.
+        </p>
+      </div>
+      <div>
+        <h4>Resources</h4>
+        <ul>
+          <li><a href="https://dl.acm.org/doi/10.1145/3799682.3841011" target="_blank" rel="noopener">Paper (ACM DL)</a></li>
+          <li><a href="assets/paper/Fin-CoDiT_CIKM2026.pdf">Paper (local PDF)</a></li>
+          <li><a href="assets/paper/Fin-CoDiT_CIKM2026_slides.pdf">Talk slides</a></li>
+          <li><a href="results.html">Full result tables</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Project</h4>
+        <ul>
+          <li><a href="#insight">Key insight</a></li>
+          <li><a href="#method">Method</a></li>
+          <li><a href="#results">Evaluation</a></li>
+          <li><a href="#data">Dataset</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <ul>
+          <li><a href="mailto:zhangyx20@gmail.com">zhangyx20@gmail.com</a></li>
+          <li><a href="mailto:fengke@pku.edu.cn">fengke@pku.edu.cn</a></li>
+          <li><a href="mailto:jiaxdan@gmail.com">jiaxdan@gmail.com</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Yingxiao Zhang, Jiaxin Duan, Junfu Zhang, Yue Zou, Ke Feng — Peking University &amp; China Electronics Cloud Tech</span>
+      <span>Built as a static site · data-driven from the paper tables</span>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/data/results.js"></script>
+<script src="assets/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Full result tables — Fin-CoDiT (CIKM '26)</title>
+<meta name="description" content="Complete evaluation tables for Fin-CoDiT: generation fidelity over six assets and three horizons, aggregate statistical alignment, and the component ablation study.">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,500;1,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="shell nav-inner">
+    <a class="brand" href="index.html">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span>Fin-CoDiT</span>
+    </a>
+    <nav class="nav-links" id="nav-links" aria-label="Primary">
+      <a href="index.html#insight">Insight</a>
+      <a href="index.html#method">Method</a>
+      <a href="index.html#results">Results</a>
+      <a href="index.html#data">Dataset</a>
+      <a href="results.html" aria-current="page">Full tables</a>
+    </nav>
+    <div class="nav-actions">
+      <a class="btn btn-primary btn-sm" href="https://dl.acm.org/doi/10.1145/3799682.3841011" target="_blank" rel="noopener">Paper ↗</a>
+      <button class="icon-btn" data-theme-toggle aria-label="Toggle theme"></button>
+      <button class="icon-btn nav-toggle" data-nav-toggle aria-label="Open menu" aria-expanded="false" aria-controls="nav-links">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+<section class="section" style="padding-bottom:1.2rem">
+  <div class="shell">
+    <p class="kicker">Complete evaluation</p>
+    <h1 style="font-size:clamp(2rem,4.2vw,2.9rem)">All result tables</h1>
+    <p class="lede" style="max-width:46rem">
+      Every number below is transcribed from the CIKM ’26 paper. Test segments are evaluated on
+      strictly calendar-aligned horizons — Monday-to-Sunday for weekly segments and natural calendar
+      months — rather than the sliding windows used during training. Lower is better for MSE, MAE,
+      tail index error, volatility-clustering error, leverage error and CVR; higher is better for SCS
+      and the human score.
+    </p>
+  </div>
+</section>
+
+<section class="section" style="padding-top:0">
+  <div class="shell">
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <p class="kicker">Table 2 — generation fidelity</p>
+          <h2 class="panel-title">MSE / MAE across six assets and three horizons</h2>
+          <p class="panel-sub">Bold = best in column · underline = second best · * = conditional (text-controlled) architecture</p>
+        </div>
+        <div class="seg" data-metric-group="fidelity" role="group" aria-label="Select metric" style="margin-left:auto">
+          <button type="button" data-metric="mse" aria-pressed="true">MSE</button>
+          <button type="button" data-metric="mae" aria-pressed="false">MAE</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="table-wrap" id="fidelity-table" style="max-height:640px;overflow:auto"></div>
+      </div>
+      <div class="panel-foot">
+        <span>TS, TF, T, TL are Chinese Treasury futures; HS300 and SSE50 are equity ETFs.</span>
+        <a class="btn btn-ghost btn-sm" href="index.html#results">Back to overview</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="shell">
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <p class="kicker">Table 3 — aggregate</p>
+          <h2 class="panel-title">Statistical alignment, constraint adherence, semantic controllability</h2>
+          <p class="panel-sub">Averaged over all six datasets and the 7 / 14 / 30-day horizons</p>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="table-wrap" id="aggregate-table"></div>
+      </div>
+      <div class="panel-foot">
+        <span>Tail index error is measured with the Hill estimator; volatility clustering is the L2 distance between ACFs of squared returns up to 20 lags.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="shell">
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <p class="kicker">Table 4 — ablation</p>
+          <h2 class="panel-title">Semantics–Frequency Alignment and TF-CVAE components</h2>
+          <p class="panel-sub">Denoising MSE, semantic controllability, event execution and physical-constraint violation</p>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="table-wrap" id="ablation-table"></div>
+        <ul class="small muted" style="margin:1rem 0 0;padding-left:1.1rem">
+          <li><strong>w/o SFA</strong> — head-grouped routing replaced by FuseDiT-style layer-wise sharing: the largest regression (MSE +5.3%, SCS 0.88 → 0.71).</li>
+          <li><strong>w/o Prior Bias</strong> — the frequency prior vectors are zeroed, so routing weights are learned from scratch; mainly harms training stability.</li>
+          <li><strong>w/ Dense Routing</strong> — dense softmax over all 32 layers adds parameters and latency without improving results, confirming the sparse Top-K design.</li>
+          <li><strong>w/o Causal Encoder</strong> — non-causal 2D convolutions leak the future: a linear probe on <span class="mono">z<sub>t</sub></span> predicts <span class="mono">r<sub>t+1</sub></span> with R² = 0.62 versus ≈0.01 for the causal encoder.</li>
+          <li><strong>w/o Morphological Projection</strong> — the branched decoder and physical post-processing are removed, so OHLC is predicted independently and the violation rate jumps from 0.05% to 8.42%.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="shell">
+    <div class="section-head">
+      <p class="kicker">Routing analysis</p>
+      <h2>Trade-off and the learned routing map</h2>
+    </div>
+    <div class="pillars" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+      <figure class="figure">
+        <img src="assets/img/fig3a_tradeoff.png" alt="Semantic controllability, generation quality and inference latency as the routing sparsity parameter K varies" loading="lazy">
+        <figcaption><b>Figure 3a — sparsity trade-off.</b> SCS improves up to K = 4 and then plateaus or degrades for K &gt; 8 through a semantic dilution effect; inference latency grows monotonically with K.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img src="assets/img/fig3b_routing.png" alt="Heatmap of learned routing weights across the 32 LLM layers for low-, mid- and high-frequency head groups" loading="lazy">
+        <figcaption><b>Figure 3b — learned layer routing.</b> Low-frequency heads concentrate on the high-level semantic layers (l &gt; 24); high-frequency heads query the lower structural layers (l &lt; 12).</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="shell">
+    <div class="section-head">
+      <p class="kicker">Experimental setup</p>
+      <h2>Baselines and implementation</h2>
+    </div>
+    <div class="pillars" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+      <article class="pillar">
+        <p class="pillar-num">Baselines</p>
+        <h3>Three families</h3>
+        <p>
+          <strong>GANs</strong> — TimeGAN, WGAN, QuatGAN.
+          <strong>Diffusion</strong> — GBMDiff, FinDDPM.
+          <strong>Conditional / LLM-based</strong> — TimeDiT, TimeLLM, CALF, T2S.
+        </p>
+      </article>
+      <article class="pillar">
+        <p class="pillar-num">Backbone</p>
+        <h3>Frozen Gemma4-E4B</h3>
+        <p>
+          Hidden states from all <strong>L = 32</strong> layers act as the semantic codebook; the LLM
+          is never fine-tuned. RoutDiT runs <strong>12</strong> transformer layers at width
+          <strong>768</strong> with <strong>12</strong> attention heads partitioned into
+          <strong>4 / 4 / 4</strong> frequency groups, selecting <strong>Top-K = 5</strong> LLM
+          layers, with <strong>K = 1000</strong> diffusion steps.
+        </p>
+      </article>
+      <article class="pillar">
+        <p class="pillar-num">Training</p>
+        <h3>Hardware &amp; schedule</h3>
+        <p>
+          Trained on <strong>8× NVIDIA A800</strong> (80GB) with AdamW, learning rate 1×10<sup>−4</sup>,
+          batch size 64. The TF-CVAE uses <strong>4</strong> orthogonal causal ResBlocks, a 4-channel
+          latent space, <strong>2</strong> LQA layers, Haar level-4 wavelets, and cyclical KL
+          annealing (β: 0 → 0.01). λ<sub>KL</sub> = 0.01, λ<sub>LB</sub> = 0.05.
+        </p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="shell">
+    <div class="callout">
+      <div>
+        <p class="kicker">Citation</p>
+        <pre class="bib" id="bibtex">@inproceedings{zhang2026fincodit,
+  title     = {Exploring Semantics-Frequency Alignment in Diffusion Transformers for Financial Time Series Generation},
+  author    = {Zhang, Yingxiao and Duan, Jiaxin and Zhang, Junfu and Zou, Yue and Feng, Ke},
+  booktitle = {Proceedings of the 35th ACM International Conference on Information and Knowledge Management (CIKM '26)},
+  year      = {2026},
+  publisher = {Association for Computing Machinery},
+  doi       = {10.1145/3799682.3841011}
+}</pre>
+      </div>
+      <div style="display:grid;gap:.5rem;min-width:180px">
+        <button class="btn btn-primary" data-copy="#bibtex">Copy BibTeX</button>
+        <a class="btn btn-ghost" href="index.html">Back to overview</a>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="footer">
+  <div class="shell">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand"><span class="brand-mark" aria-hidden="true"></span> Fin-CoDiT</div>
+        <p class="footer-note">
+          Semantics–Frequency Alignment in Diffusion Transformers for conditional financial
+          time series generation. Published at CIKM ’26, Rome.
+        </p>
+      </div>
+      <div>
+        <h4>Resources</h4>
+        <ul>
+          <li><a href="https://dl.acm.org/doi/10.1145/3799682.3841011" target="_blank" rel="noopener">Paper (ACM DL)</a></li>
+          <li><a href="assets/paper/Fin-CoDiT_CIKM2026.pdf">Paper (local PDF)</a></li>
+          <li><a href="assets/paper/Fin-CoDiT_CIKM2026_slides.pdf">Talk slides</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Project</h4>
+        <ul>
+          <li><a href="index.html#insight">Key insight</a></li>
+          <li><a href="index.html#method">Method</a></li>
+          <li><a href="index.html#data">Dataset</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <ul>
+          <li><a href="mailto:zhangyx20@gmail.com">zhangyx20@gmail.com</a></li>
+          <li><a href="mailto:fengke@pku.edu.cn">fengke@pku.edu.cn</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Yingxiao Zhang, Jiaxin Duan, Junfu Zhang, Yue Zou, Ke Feng — Peking University &amp; China Electronics Cloud Tech</span>
+      <span>Data-driven from the paper tables</span>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/data/results.js"></script>
+<script src="assets/js/main.js"></script>
+</body>
+</html>
